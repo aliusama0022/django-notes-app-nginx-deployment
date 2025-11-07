@@ -1,0 +1,34 @@
+name: Deploy Django Notes App via Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy on Self-Hosted EC2 Runner
+    runs-on: self-hosted   # your EC2 runner label
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull latest changes
+        run: |
+          echo "🔄 Pulling latest code..."
+          git fetch --all
+          git reset --hard origin/main
+
+      - name: Build and deploy with Docker Compose
+        run: |
+          echo "🚀 Starting deployment..."
+          docker compose down || true
+          docker compose pull || true
+          docker compose build --no-cache
+          docker compose up -d
+          docker image prune -f
+          echo "✅ Deployment complete!"
+
+      - name: Show container status
+        run: docker ps
