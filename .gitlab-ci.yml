@@ -1,0 +1,15 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  tags:
+    - ec2-runner
+  script:
+    - echo "Deploying Django Notes App using Docker Compose..."
+    - cd /home/ubuntu/django-notes-app-nginx-deployment
+    - git pull origin main
+    - docker-compose down
+    - docker-compose up -d --build
+  only:
+    - main
