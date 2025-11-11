@@ -1,15 +1,24 @@
 stages:
+  - build
   - deploy
+
+variables:
+  AWS_REGION: "us-east-1"
+  EC2_HOST: "ec2-3-236-54-59.compute-1.amazonaws.com"
+  EC2_USER: "ubuntu"
+  SSH_KEY: "/root/.ssh/project.pem"
+
+before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan $EC2_HOST >> ~/.ssh/known_hosts
 
 deploy:
   stage: deploy
-  tags:
-    - ec2-runner
   script:
-    - echo "Deploying Django Notes App using Docker Compose..."
-    - cd /home/ubuntu/django-notes-app-nginx-deployment
-    - git pull origin main
-    - docker-compose down
-    - docker-compose up -d --build
+    - ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "sudo docker pull my-django-app:latest && sudo docker-compose up -d"
   only:
     - main
