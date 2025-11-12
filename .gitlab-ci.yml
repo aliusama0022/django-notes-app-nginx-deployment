@@ -4,9 +4,9 @@ stages:
 deploy:
   stage: deploy
   tags:
-    - self-hosted   # Your GitLab Runner tag
+    - self-hosted
   only:
-    - main          # Run only on main branch
+    - main
   before_script:
     - echo "🔄 Preparing environment..."
     - git fetch --all
