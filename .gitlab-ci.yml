@@ -3,20 +3,23 @@ stages:
 
 deploy:
   stage: deploy
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-  before_script:
+  tags:
+    - shell  # matches your self-hosted runner
+  script:
     - apk add --no-cache openssh-client bash git
-    # Setup SSH
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
-  script:
-    - echo "🔄 Pulling latest code on EC2..."
-    - ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST "cd ~/django-notes-app-nginx-deployment && git fetch --all && git reset --hard origin/main"
-    - echo "🚀 Building and deploying Docker containers..."
-    - ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST "cd ~/django-notes-app-nginx-deployment && docker-compose down || true && docker-compose pull || true && docker-compose build --no-cache && docker-compose up -d && docker image prune -f"
-    - echo "✅ Deployment complete!"
-    - ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST "docker ps"
+    - ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST "
+        mkdir -p ~/django-notes-app-nginx-deployment &&
+        cd ~/django-notes-app-nginx-deployment &&
+        git fetch --all &&
+        git reset --hard origin/main &&
+        docker-compose down || true &&
+        docker-compose pull || true &&
+        docker-compose build --no-cache &&
+        docker-compose up -d &&
+        docker image prune -f &&
+        docker ps
+      "
