@@ -1,18 +1,23 @@
+stages:
+  - deploy
+
 deploy:
   stage: deploy
   tags:
-    - self-hosted
+    - self-hosted   # The tag of your runner
   only:
-    - main
-  script:
+    - main          # Run only on main branch
+  before_script:
     - echo "🔄 Preparing environment..."
     - git fetch --all
     - git reset --hard origin/main
+  script:
     - echo "🚀 Deploying with Docker Compose..."
-    - sudo docker-compose down || true
-    - sudo docker-compose pull || true
-    - sudo docker-compose build --no-cache
-    - sudo docker-compose up -d
-    - sudo docker image prune -f
+    - docker-compose down || true
+    - docker-compose pull || true
+    - docker-compose build --no-cache
+    - docker-compose up -d
+    - docker image prune -f
     - echo "✅ Deployment complete!"
-    - sudo docker ps
+    - echo "📦 Current running containers:"
+    - docker ps
