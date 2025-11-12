@@ -4,22 +4,20 @@ stages:
 deploy:
   stage: deploy
   tags:
-    - shell  # matches your self-hosted runner
+    - self-hosted   # Your GitLab Runner tag
+  only:
+    - main          # Run only on main branch
+  before_script:
+    - echo "🔄 Preparing environment..."
+    - git fetch --all
+    - git reset --hard origin/main
   script:
-    - apk add --no-cache openssh-client bash git
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
-    - ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST "
-        mkdir -p ~/django-notes-app-nginx-deployment &&
-        cd ~/django-notes-app-nginx-deployment &&
-        git fetch --all &&
-        git reset --hard origin/main &&
-        docker-compose down || true &&
-        docker-compose pull || true &&
-        docker-compose build --no-cache &&
-        docker-compose up -d &&
-        docker image prune -f &&
-        docker ps
-      "
+    - echo "🚀 Starting deployment..."
+    - docker-compose down || true
+    - docker-compose pull || true
+    - docker-compose build --no-cache
+    - docker-compose up -d
+    - docker image prune -f
+    - echo "✅ Deployment complete!"
+    - echo "📦 Current running containers:"
+    - docker ps
